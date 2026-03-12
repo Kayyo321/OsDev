@@ -9,12 +9,11 @@ SRC_FILES := $(shell find $(SRC_DIR) -name '*.c')
 # Create object files from source files (*.o)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
-# Define the name of the final executable
-EXECUTABLE = $(BIN_DIR)/os
-
 # Compiler and flags
 CC = gcc
 CFLAGS = -Wall -g
+ASM = nasm
+AFLAGS = -f bin 
 
 # Rule to compile the program
 $(EXECUTABLE): $(OBJ_FILES) | $(BIN_DIR)
