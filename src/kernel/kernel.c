@@ -1,5 +1,5 @@
-void main(void) {
+void entry(void) {
     char *video_memory = (char*)0xb8000;
 
-    *video_memory = '$';
+    *video_memory = '@';
 }

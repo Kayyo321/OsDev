@@ -25,6 +25,7 @@ AFLAGS = -f bin
 BOOT_BIN = $(BIN_DIR)/boot_sect.bin
 
 # Kernel
+KERNEL_ENTRY_OBJ = $(OBJ_DIR)/kernel/kernel_entry.o
 KERNEL_OBJ = $(OBJ_DIR)/kernel/kernel.o
 KERNEL_BIN = $(BIN_DIR)/kernel.bin
 
@@ -38,14 +39,19 @@ all: $(OS_IMAGE)
 $(BOOT_BIN): $(BOOT_DIR)/boot.asm $(BOOT_DIR)/print_string.asm $(BOOT_DIR)/print_string_pm.asm $(BOOT_DIR)/switch_to_pm.asm $(BOOT_DIR)/gdt.asm | $(BIN_DIR)
 	$(ASM) $(AFLAGS) -i $(BOOT_DIR)/ $(BOOT_DIR)/boot.asm -o $(BOOT_BIN)
 
+# Assemble kernel entry point
+$(KERNEL_ENTRY_OBJ): $(KERNEL_DIR)/kernel_entry.asm | $(OBJ_DIR)
+	mkdir -p $(dir $@)
+	$(ASM) -f elf $< -o $@
+
 # Compile kernel C source to object file
 $(KERNEL_OBJ): $(KERNEL_DIR)/kernel.c | $(OBJ_DIR)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Link kernel object into flat binary
-$(KERNEL_BIN): $(KERNEL_OBJ) | $(BIN_DIR)
-	$(LD) $(LDFLAGS) -o $@ -Ttext 0x1000 $< --oformat binary
+# Link kernel entry + kernel into flat binary (entry first so it sits at 0x1000)
+$(KERNEL_BIN): $(KERNEL_ENTRY_OBJ) $(KERNEL_OBJ) | $(BIN_DIR)
+	$(LD) $(LDFLAGS) -o $@ -Ttext 0x1000 $^ --oformat binary
 
 # Concatenate boot sector and kernel into a single OS image, padded to at least 16 sectors (8KB)
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
