@@ -15,11 +15,12 @@ KERNEL_DIR = $(SRC_DIR)/kernel
 
 # Compiler and flags
 CC = x86_64-elf-gcc
-CFLAGS = -ffreestanding -m32
+CFLAGS = -ffreestanding -m32 -mno-sse
 LD = x86_64-elf-ld
 LDFLAGS = -m elf_i386
 ASM = nasm
 AFLAGS = -f bin
+
 
 # Boot sector
 BOOT_BIN = $(BIN_DIR)/boot_sect.bin
@@ -44,13 +45,13 @@ $(KERNEL_ENTRY_OBJ): $(KERNEL_DIR)/kernel_entry.asm | $(OBJ_DIR)
 	mkdir -p $(dir $@)
 	$(ASM) -f elf $< -o $@
 
-# Compile kernel C source to object file
-$(KERNEL_OBJ): $(KERNEL_DIR)/kernel.c | $(OBJ_DIR)
+# Compile any C source to its corresponding object file
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Link kernel entry + kernel into flat binary (entry first so it sits at 0x1000)
-$(KERNEL_BIN): $(KERNEL_ENTRY_OBJ) $(KERNEL_OBJ) | $(BIN_DIR)
+# Link kernel entry + all C object files into flat binary (entry first so it sits at 0x1000)
+$(KERNEL_BIN): $(KERNEL_ENTRY_OBJ) $(OBJ_FILES) | $(BIN_DIR)
 	$(LD) $(LDFLAGS) -o $@ -Ttext 0x1000 $^ --oformat binary
 
 # Concatenate boot sector and kernel into a single OS image, padded to at least 16 sectors (8KB)
